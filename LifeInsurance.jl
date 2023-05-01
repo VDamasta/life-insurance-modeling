@@ -1,7 +1,7 @@
 """
     LifeTable
 
-    A life table contaning the age (x) and number of people alive at that age (lx)
+    A life table containing the age (x) and number of people alive at that age (lx) from a cohort of people
 
     # Examples
     ```julia-repl
@@ -13,14 +13,14 @@ struct LifeTable
     lx::Vector{Float64}
     name::String
 
-    function LifeTable(x::Vector{Int}, lx::Vector{Float64}, name::String)
+    function LifeTable(x::Vector{Int}, lx::Vector{Int}, name::String)
         check = String[]
 
         if length(x) != length(lx) 
             push!(check, "Length of x and lx must be the same") 
         end
 
-        if any(diff(lx) .>= 0)
+        if any(diff(lx) .> 0)
             push!(check, "lx must be a decreasing sequence")
         end
 
@@ -52,17 +52,57 @@ function pxt(lt::LifeTable, x::Int, t::Int)
     ageIndex = findfirst(item -> item == x, lt.x)
     surviveIndex = findfirst(item -> item == x + t, lt.x)
 
+
     lx = lt.lx[ageIndex]
     lxt = lt.lx[surviveIndex]
-    return lxt/lx
+    lx == 0 ? prob = 1 : prob = lxt/lx
+    return prob
 end
 
+
 function qxt(lt::LifeTable, x::Int, t::Int)
-        1 - pxt(lt,x,t) 
+    return 1 - pxt(lt,x,t) 
 end
 
 function axn(lt::LifeTable, x::Int, n::Int, i::Float64) 
-    pxt = pxt(lt, x,t)
-
+    v = 1/(1+i)
+    PV = 0
+    for term in 1:n
+        survivalProb = pxt(lt,x,term)
+        disc = v^term
+        PV += survivalProb * disc
+    end
     
+    return PV
 end
+
+axn(lt_MR,10,10,0.03)
+
+function Axn(lt::LifeTable, x::Int, n::Int, i::Float64)
+    v = 1/(1+i)
+    PV = 0
+    for term in 1:n
+        survivalProb = pxt(lt,x,term-1)
+        deathProb = qxt(lt,x + term-1,1)
+        disc = v^term
+        PV += survivalProb * deathProb * disc
+    end
+    
+    return PV
+end
+
+Axn(lt_MR,10,10,0.03)
+
+function Exn(lt::LifeTable, x::Int, n::Int, i::Float64)
+    v = 1/(1+i)
+    survivalProb = pxt(lt,x,n)
+    disc = v^n
+    PV = survivalProb * disc    
+    
+    return PV
+end
+
+
+Axn(lt_MK,20,99,0.0375)
+Exn(lt_MR,20,65-20,0.0475)
+axn(lt_MR,40,119-40,0.0375)
