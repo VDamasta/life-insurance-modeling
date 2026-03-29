@@ -74,6 +74,17 @@ function qxt(lt::LifeTable, x::Int, t::Int)
     return 1 - pxt(lt,x,t)
 end
 
+"""
+    axn
+
+    Present value of a temporary life annuity paying 1 per period for a person aged x, over n years, at interest rate i
+
+    # Examples
+    ```julia-repl
+    julia> lt = LifeTable([30, 31, 32], [97000, 96000, 90000], "My Life Table")
+    julia> axn(lt, 30, 2, 0.03)
+    ```
+"""
 function axn(lt::LifeTable, x::Int, n::Int, i::Float64)
     v = 1/(1+i)
     PV = 0
