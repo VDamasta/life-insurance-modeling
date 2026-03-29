@@ -1,6 +1,6 @@
 module LifeInsurance
 
-export LifeTable, pxt, qxt, axn, Axn, Exn
+export LifeTable, pxt, qxt, axn, Axn, Exn, ax, Ax, AExn, m_axn, Pxn, Vt
 
 """
     LifeTable
@@ -145,6 +145,115 @@ function Exn(lt::LifeTable, x::Int, n::Int, i::Float64)
     survivalProb = pxt(lt, x, n)
     disc = v^n
     return survivalProb * disc
+end
+
+"""
+    ax
+
+    Present value of a whole life annuity paying 1 per period for a person aged x, at interest rate i.
+    Runs until the last age in the life table.
+
+    # Examples
+    ```julia-repl
+    julia> lt = LifeTable([30, 31, 32], [97000, 96000, 90000], "My Life Table")
+    julia> ax(lt, 30, 0.03)
+    ```
+"""
+function ax(lt::LifeTable, x::Int, i::Float64)
+    n = lt.x[end] - x
+    return axn(lt, x, n, i)
+end
+
+"""
+    Ax
+
+    Present value of a whole life insurance paying 1 upon death of a person aged x, at interest rate i.
+    Runs until the last age in the life table.
+
+    # Examples
+    ```julia-repl
+    julia> lt = LifeTable([30, 31, 32], [97000, 96000, 90000], "My Life Table")
+    julia> Ax(lt, 30, 0.03)
+    ```
+"""
+function Ax(lt::LifeTable, x::Int, i::Float64)
+    n = lt.x[end] - x
+    return Axn(lt, x, n, i)
+end
+
+"""
+    AExn
+
+    Present value of an endowment insurance for a person aged x over n years, at interest rate i.
+    Pays 1 upon death within n years, or 1 upon survival to n years (whichever comes first).
+    Equals Axn + Exn.
+
+    # Examples
+    ```julia-repl
+    julia> lt = LifeTable([30, 31, 32], [97000, 96000, 90000], "My Life Table")
+    julia> AExn(lt, 30, 2, 0.03)
+    ```
+"""
+function AExn(lt::LifeTable, x::Int, n::Int, i::Float64)
+    return Axn(lt, x, n, i) + Exn(lt, x, n, i)
+end
+
+"""
+    m_axn
+
+    Present value of a deferred temporary life annuity for a person aged x, deferred m years,
+    then paying 1 per period for n years, at interest rate i.
+
+    # Examples
+    ```julia-repl
+    julia> lt = LifeTable([30, 31, 32, 33, 34], [97000, 96000, 90000, 85000, 80000], "My Life Table")
+    julia> m_axn(lt, 30, 2, 2, 0.03)
+    ```
+"""
+function m_axn(lt::LifeTable, x::Int, m::Int, n::Int, i::Float64)
+    v = 1 / (1 + i)
+    PV = 0.0
+    for term in (m + 1):(m + n)
+        survivalProb = pxt(lt, x, term)
+        PV += survivalProb * v^term
+    end
+    return PV
+end
+
+"""
+    Pxn
+
+    Net level annual premium for a term life insurance on a person aged x over n years, at interest rate i.
+    Computed as Axn / axn.
+
+    # Examples
+    ```julia-repl
+    julia> lt = LifeTable([30, 31, 32], [97000, 96000, 90000], "My Life Table")
+    julia> Pxn(lt, 30, 2, 0.03)
+    ```
+"""
+function Pxn(lt::LifeTable, x::Int, n::Int, i::Float64)
+    return Axn(lt, x, n, i) / axn(lt, x, n, i)
+end
+
+"""
+    Vt
+
+    Prospective policy reserve at time t for a term life insurance on a person aged x over n years,
+    at interest rate i. Equals the present value of future benefits minus present value of future premiums.
+
+    # Examples
+    ```julia-repl
+    julia> lt = LifeTable([30, 31, 32, 33, 34], [97000, 96000, 90000, 85000, 80000], "My Life Table")
+    julia> Vt(lt, 30, 4, 2, 0.03)
+    ```
+"""
+function Vt(lt::LifeTable, x::Int, n::Int, t::Int, i::Float64)
+    if t == n
+        return 0.0
+    end
+    P = Pxn(lt, x, n, i)
+    return Axn(lt, x + t, n - t, i) - P * axn(lt, x + t, n - t, i)
 end
 
 end # module
