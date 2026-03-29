@@ -4,11 +4,36 @@ A Julia project for modeling life insurance products using Belgian actuarial lif
 
 ## Products
 
-| Product | Function | Description |
-|---|---|---|
-| Life Annuity | `axn` | Present value of a temporary life annuity |
-| Term Insurance | `Axn` | Present value of a term life insurance |
-| Pure Endowment | `Exn` | Present value of a pure endowment |
+### Building blocks
+
+| Function | Description |
+|---|---|
+| `pxt(lt, x, t, i)` | Survival probability: P(alive at x+t \| alive at x) |
+| `qxt(lt, x, t, i)` | Mortality probability: 1 - pxt |
+
+### Insurance products
+
+| Function | Description |
+|---|---|
+| `Axn(lt, x, n, i)` | Term life insurance — pays 1 on death within n years |
+| `Ax(lt, x, i)` | Whole life insurance — pays 1 on death at any age |
+| `Exn(lt, x, n, i)` | Pure endowment — pays 1 if alive after n years |
+| `AExn(lt, x, n, i)` | Endowment insurance — pays 1 on death OR survival (= Axn + Exn) |
+
+### Annuity products
+
+| Function | Description |
+|---|---|
+| `axn(lt, x, n, i)` | Temporary life annuity — pays 1/year for up to n years |
+| `ax(lt, x, i)` | Whole life annuity — pays 1/year for life |
+| `m_axn(lt, x, m, n, i)` | Deferred temporary annuity — starts after m years, pays for n years |
+
+### Pricing & reserving
+
+| Function | Description |
+|---|---|
+| `Pxn(lt, x, n, i)` | Net level annual premium for a term insurance (= Axn / axn) |
+| `Vt(lt, x, n, t, i)` | Prospective policy reserve at time t |
 
 ## Life Tables
 
@@ -37,14 +62,32 @@ pxt(lt, 30, 2)
 # Mortality probability: P(dies within 1 year | alive at 30)
 qxt(lt, 30, 1)
 
-# Present value of a 10-year life annuity for age 40, i=3%
+# Present value of a 10-year temporary life annuity, age 40, i=3%
 axn(lt, 40, 10, 0.03)
 
-# Present value of a 10-year term insurance for age 40, i=3%
+# Present value of a whole life annuity, age 40, i=3%
+ax(lt, 40, 0.03)
+
+# Present value of a 10-year temporary life annuity deferred 5 years, age 40, i=3%
+m_axn(lt, 40, 5, 10, 0.03)
+
+# Present value of a 10-year term insurance, age 40, i=3%
 Axn(lt, 40, 10, 0.03)
 
-# Present value of a pure endowment (survive 10 years) for age 40, i=3%
+# Present value of a whole life insurance, age 40, i=3%
+Ax(lt, 40, 0.03)
+
+# Present value of a pure endowment (survive 10 years), age 40, i=3%
 Exn(lt, 40, 10, 0.03)
+
+# Present value of a 10-year endowment insurance, age 40, i=3%
+AExn(lt, 40, 10, 0.03)
+
+# Net level annual premium for a 10-year term insurance, age 40, i=3%
+Pxn(lt, 40, 10, 0.03)
+
+# Prospective policy reserve at time 5 for a 10-year term insurance, age 40, i=3%
+Vt(lt, 40, 10, 5, 0.03)
 ```
 
 ## Project Structure

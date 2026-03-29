@@ -82,3 +82,63 @@ end
     i = 0.03
     @test Axn(lt, 30, 4, i) + Exn(lt, 30, 4, i) ≤ 1.0
 end
+
+@testset "ax" begin
+    # whole life annuity >= temporary annuity for same age
+    @test ax(lt, 30, 0.03) >= axn(lt, 30, 2, 0.03)
+
+    # with i=0 equals sum of all survival probs to end of table
+    pv_no_disc = ax(lt, 30, 0.0)
+    expected = sum(pxt(lt, 30, t) for t in 1:(lt.x[end] - 30))
+    @test pv_no_disc ≈ expected
+end
+
+@testset "Ax" begin
+    # whole life insurance >= term insurance for same age
+    @test Ax(lt, 30, 0.03) >= Axn(lt, 30, 2, 0.03)
+
+    # with i=0 certain death so PV = 1 (everyone eventually dies)
+    @test Ax(lt, 30, 0.0) ≈ 1.0
+end
+
+@testset "AExn" begin
+    # equals Axn + Exn by definition
+    i = 0.03
+    @test AExn(lt, 30, 4, i) ≈ Axn(lt, 30, 4, i) + Exn(lt, 30, 4, i)
+
+    # with i=0, AExn = 1 (either dies or survives, so certain payout)
+    @test AExn(lt, 30, 4, 0.0) ≈ 1.0
+end
+
+@testset "m_axn" begin
+    # deferred annuity with m=0 equals temporary annuity
+    @test m_axn(lt, 30, 0, 4, 0.03) ≈ axn(lt, 30, 4, 0.03)
+
+    # deferred annuity is always less than non-deferred (discounting + mortality)
+    @test m_axn(lt, 30, 1, 3, 0.03) < axn(lt, 30, 3, 0.03)
+end
+
+@testset "Pxn" begin
+    # premium is positive
+    @test Pxn(lt, 30, 4, 0.03) > 0.0
+
+    # premium = Axn / axn
+    i = 0.03
+    @test Pxn(lt, 30, 4, i) ≈ Axn(lt, 30, 4, i) / axn(lt, 30, 4, i)
+
+    # higher interest rate increases premium (discount reduces annuity more than insurance)
+    @test Pxn(lt, 30, 4, 0.05) > Pxn(lt, 30, 4, 0.01)
+end
+
+@testset "Vt" begin
+    i = 0.03
+
+    # reserve at t=0 should be 0 (no payments made yet, equivalence principle)
+    @test Vt(lt, 30, 4, 0, i) ≈ 0.0 atol=1e-10
+
+    # reserve at t=n should be 0 (policy expired)
+    @test Vt(lt, 30, 4, 4, i) ≈ 0.0
+
+    # reserve increases over time (for term insurance)
+    @test Vt(lt, 30, 4, 2, i) >= Vt(lt, 30, 4, 1, i)
+end
