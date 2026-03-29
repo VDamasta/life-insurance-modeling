@@ -1,6 +1,7 @@
 using CSV
 using DataFrames
 using BenchmarkTools
+using Tables
 
 include("LifeInsurance.jl")
 
