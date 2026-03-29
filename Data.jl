@@ -1,6 +1,7 @@
 using CSV
 using DataFrames
 using BenchmarkTools
+using Tables
 
 include("LifeInsurance.jl")
 
@@ -15,7 +16,7 @@ lt_XR =  LifeTable(BelgianLifeTables.x, BelgianLifeTables.XR,"XR Table")
 
 lt_MK =  LifeTable(BelgianLifeTables.x, BelgianLifeTables.MK,"MK Table") 
 lt_FK =  LifeTable(BelgianLifeTables.x, BelgianLifeTables.FK,"FK Table") 
-lt_XK =  LifeTable(BelgianLifeTables.x, BelgianLifeTables.FK,"XK Table") 
+lt_XK =  LifeTable(BelgianLifeTables.x, BelgianLifeTables.XK,"XK Table")
 
 # Generate fake data
 
