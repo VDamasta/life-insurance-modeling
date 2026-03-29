@@ -4,9 +4,10 @@ using BenchmarkTools
 using Tables
 
 include("LifeInsurance.jl")
+using .LifeInsurance
 
-# Load data 
-BelgianLifeTables = CSV.read("input\\BelgianLifeTables.csv", DataFrame)
+# Load data
+BelgianLifeTables = CSV.read(joinpath("input", "BelgianLifeTables.csv"), DataFrame)
 
 # Create Life Tables
 
