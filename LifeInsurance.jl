@@ -1,3 +1,7 @@
+module LifeInsurance
+
+export LifeTable, pxt, qxt, axn, Axn, Exn
+
 """
     LifeTable
 
@@ -5,7 +9,7 @@
 
     # Examples
     ```julia-repl
-    julia> LifeTable([30, 31, 32], [0.97, 0.96, 0.9], "My Life Table")
+    julia> LifeTable([30, 31, 32], [97000, 96000, 90000], "My Life Table")
     ```
 """
 struct LifeTable
@@ -13,26 +17,26 @@ struct LifeTable
     lx::Vector{Float64}
     name::String
 
-    function LifeTable(x::Vector{Int}, lx::Vector{Int}, name::String)
+    function LifeTable(x::Vector{Int}, lx::Vector{<:Real}, name::String)
         check = String[]
 
         if length(x) != length(lx)
             push!(check, "Length of x and lx must be the same")
         end
 
-        if any(diff(lx) .> 0)
-            push!(check, "lx must be a decreasing sequence")
+        if any(diff(lx) .>= 0)
+            push!(check, "lx must be a strictly decreasing sequence")
         end
 
         if any(diff(x) .!= 1)
             push!(check, "x must be consecutive integers")
         end
 
-        if length(check) >= 1
-            error(check)
+        if !isempty(check)
+            error(join(check, "\n"))
         end
 
-        new(x, lx, name)
+        new(x, Float64.(lx), name)
     end
 end
 
@@ -49,13 +53,19 @@ end
     ```
 """
 function pxt(lt::LifeTable, x::Int, t::Int)
-    ageIndex = findfirst(item -> item == x, lt.x)
-    surviveIndex = findfirst(item -> item == x + t, lt.x)
+    ageIndex = findfirst(==(x), lt.x)
+    surviveIndex = findfirst(==(x + t), lt.x)
+
+    if isnothing(ageIndex)
+        error("Age $x is not in the life table")
+    end
+    if isnothing(surviveIndex)
+        error("Age $(x + t) is not in the life table")
+    end
 
     lx = lt.lx[ageIndex]
     lxt = lt.lx[surviveIndex]
-    lx == 0 ? prob = 1 : prob = lxt/lx
-    return prob
+    return lx == 0 ? 0.0 : lxt / lx
 end
 
 
@@ -71,7 +81,7 @@ end
     ```
 """
 function qxt(lt::LifeTable, x::Int, t::Int)
-    return 1 - pxt(lt,x,t)
+    return 1 - pxt(lt, x, t)
 end
 
 """
@@ -86,14 +96,13 @@ end
     ```
 """
 function axn(lt::LifeTable, x::Int, n::Int, i::Float64)
-    v = 1/(1+i)
-    PV = 0
+    v = 1 / (1 + i)
+    PV = 0.0
     for term in 1:n
-        survivalProb = pxt(lt,x,term)
+        survivalProb = pxt(lt, x, term)
         disc = v^term
         PV += survivalProb * disc
     end
-
     return PV
 end
 
@@ -109,15 +118,14 @@ end
     ```
 """
 function Axn(lt::LifeTable, x::Int, n::Int, i::Float64)
-    v = 1/(1+i)
-    PV = 0
+    v = 1 / (1 + i)
+    PV = 0.0
     for term in 1:n
-        survivalProb = pxt(lt,x,term-1)
-        deathProb = qxt(lt,x + term-1,1)
+        survivalProb = pxt(lt, x, term - 1)
+        deathProb = qxt(lt, x + term - 1, 1)
         disc = v^term
         PV += survivalProb * deathProb * disc
     end
-
     return PV
 end
 
@@ -133,10 +141,10 @@ end
     ```
 """
 function Exn(lt::LifeTable, x::Int, n::Int, i::Float64)
-    v = 1/(1+i)
-    survivalProb = pxt(lt,x,n)
+    v = 1 / (1 + i)
+    survivalProb = pxt(lt, x, n)
     disc = v^n
-    PV = survivalProb * disc
-
-    return PV
+    return survivalProb * disc
 end
+
+end # module
